@@ -1,0 +1,29 @@
+/* styles/globals.css */
+
+body {
+    margin: 0;
+    font-family: sans-serif;
+    background-color: #d0e7ff;
+    /* 明るい青 */
+    color: #000;
+    /* 黒文字 */
+}
+
+.site-header {
+    padding: 1rem;
+    background-color: #000;
+    /* 黒背景 */
+    color: #fff;
+    /* 白文字 */
+    font-weight: bold;
+}
+
+.site-footer {
+    padding: 1rem;
+    background-color: #000;
+    /* 黒背景 */
+    color: #fff;
+    /* 白文字 */
+    margin-top: 2rem;
+    text-align: center;
+}
