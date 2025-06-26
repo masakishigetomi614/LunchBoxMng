@@ -1,50 +1,67 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function LoginPage() {
-    const [username, setUsername] = useState('');
+    const [userId, setUserId] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    useEffect(() => {
+        // トークンがクッキーにあるかをチェック（簡易版）
+        const token = document.cookie.split('; ').find(row => row.startsWith('token='));
+        if (token) {
+            setIsLoggedIn(true);
+        }
+    }, []);
 
     const handleLogin = async () => {
         const res = await fetch('/api/login', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ username, password }),
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: userId, password }),
         });
 
+        const result = await res.json();
+        console.log('Status:', res.status);
+        console.log('Result:', result);
 
-        if (res.ok) {
-            // Cookie を反映させるために完全リロードを行う（router.push では反映されない）
-            window.location.replace('/home');
+        if (!res.ok) {
+            setError(result.error || 'ログインに失敗しました');
         } else {
-            const result = await res.json();
-            setError(result.message || 'ログイン失敗');
+            window.location.href = '/home';
         }
+    };
+
+    const handleLogout = () => {
+        document.cookie = 'token=; Max-Age=0; path=/;';
+        setIsLoggedIn(false);
+        window.location.href = '/login';
     };
 
     return (
         <div>
-            <h2>ログインページ</h2>
-            <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="ユーザー名"
-            />
-            <br />
-            <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="パスワード"
-            />
-            <br />
-            <button onClick={handleLogin}>ログイン</button>
-            {error && <p style={{ color: 'red' }}>{error}</p>}
+            <h2>ログイン</h2>
+            {isLoggedIn ? (
+                <button onClick={handleLogout}>ログアウト</button>
+            ) : (
+                <>
+                    <input
+                        value={userId}
+                        onChange={(e) => setUserId(e.target.value)}
+                        placeholder="ユーザーID"
+                    />
+                    <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="パスワード"
+                    />
+                    <button onClick={handleLogin}>ログイン</button>
+                    {error && <p style={{ color: 'red' }}>{error}</p>}
+                </>
+            )}
         </div>
     );
 }

@@ -1,24 +1,33 @@
 import '../styles/globals.css';
 import Header from '../components/common/Header';
-// import Footer from '@/components/common/Footer';
 import Footer from '../components/common/Footer';
 import { ReactNode } from 'react';
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import { jwtVerify } from 'jose';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET || '';
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('token')?.value;
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'my-secret');
-
+    const supabase = createServerComponentClient({ cookies });
+    const token = (await cookies()).get('token')?.value;
     let username = '';
 
     if (token) {
         try {
-            const { payload } = await jwtVerify(token, secret);
-            username = payload.username as string;
-        } catch (e) {
-            console.error('JWT Decode Error', e);
+            const decoded = jwt.verify(token, JWT_SECRET) as { user_id: string };
+
+            const { data: userRecord, error } = await supabase
+                .from('users')
+                .select('display_name')
+                .eq('user_id', decoded.user_id)
+                .single();
+
+            if (userRecord && !error) {
+                username = userRecord.display_name;
+            }
+        } catch (err) {
+            console.error('JWT検証失敗:', err);
         }
     }
 
