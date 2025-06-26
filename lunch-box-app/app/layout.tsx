@@ -1,16 +1,21 @@
+export const runtime = 'nodejs';
+
 import '../styles/globals.css';
 import Header from '../components/common/Header';
 import Footer from '../components/common/Footer';
+import jwt from 'jsonwebtoken';
 import { ReactNode } from 'react';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || '';
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
     const supabase = createServerComponentClient({ cookies });
-    const token = (await cookies()).get('token')?.value;
+
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
+
     let username = '';
 
     if (token) {
@@ -34,7 +39,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     return (
         <html lang="ja">
             <body>
-                <Header username={username} />
+                <Header username={username || undefined} />
                 <main style={{ minHeight: '80vh', padding: '2rem' }}>{children}</main>
                 <Footer />
             </body>

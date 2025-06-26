@@ -12,7 +12,7 @@ const JWT_SECRET = process.env.JWT_SECRET!;
 export async function POST(req: Request) {
     const { user_id, password } = await req.json();
 
-    // users テーブルからデータ取得
+    // users テーブルからユーザー取得
     const { data: users, error } = await supabase
         .from('users')
         .select('*')
@@ -25,14 +25,27 @@ export async function POST(req: Request) {
 
     const user = users[0];
 
-    // ハッシュ化を使わず直接比較
+    // パスワードをそのまま比較（仮のロジック）
     if (user.password !== password) {
         return NextResponse.json({ error: 'パスワードが正しくありません' }, { status: 401 });
     }
 
-    const token = jwt.sign({ user_id }, JWT_SECRET, { expiresIn: '1h' });
+    // ✅ JWT の payload 定義
+    const payload = { user_id: user.user_id };
 
+    const token = jwt.sign(payload, JWT_SECRET, {
+        expiresIn: '7d', // 有効期限 7日
+    });
+
+    // ✅ レスポンスと Cookie セット（7日 = 7 * 24 * 60 * 60）
     const res = NextResponse.json({ message: 'ログイン成功' });
-    res.cookies.set('token', token, { httpOnly: true, path: '/', maxAge: 3600 });
+    res.cookies.set('token', token, {
+        httpOnly: true,
+        path: '/',
+        maxAge: 60 * 60 * 24 * 7,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+    });
+
     return res;
 }
